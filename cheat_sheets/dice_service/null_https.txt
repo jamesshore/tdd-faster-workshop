@@ -1,0 +1,48 @@
+// Embedded stub for Node's `https` module.
+// To use, pass `new NullHttps(response)` in place of `https`.
+// `response` should be a object containing `status` and `body`.
+
+
+class NullHttps {
+	constructor(response) { this._response = response; }
+
+	get() {
+		return new NullRequest(this._response);
+	}
+}
+
+class NullRequest {
+	constructor(response) { this._response = response; }
+
+	on(event, handler) {
+		if (event === "response") this._responseHandler = handler;
+	}
+
+	end() {
+		this._responseHandler(new NullResponse(this._response));
+	}
+}
+
+class NullResponse {
+	constructor({ status, body }) {
+		this.statusCode = status;
+		this.headers = {};
+		this._body = body;
+	}
+
+	on(event, handler) {
+		if (event === "data") return setImmediate(() => handler(this._body));
+		if (event === "end") setImmediate(handler);
+	}
+
+	setEncoding() {}
+}
+
+
+// Example of use:
+
+const response = {
+	status: 200,
+	body: "hello world"
+};
+const https = new NullHttps(response);

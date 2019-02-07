@@ -1,0 +1,39 @@
+// Code to make a HTTP request
+
+async function performRequestAsync(https, requestOptions) {
+	return await new Promise((resolve, reject) => {
+		const request = https.get(requestOptions);
+		request.on("response", handleResponseFn(resolve, reject));
+		request.on("error", reject);
+		request.end();
+	});
+}
+
+function handleResponseFn(resolve, reject) {
+	return function(response) {
+		let body = "";
+		response.setEncoding("utf8");
+		response.on("data", (chunk) => { body += chunk; });
+		response.on("end", () => {
+			resolve({
+				status: response.statusCode,
+				headers: response.headers,
+				body
+			});
+		});
+		response.on("error", reject);
+	};
+}
+
+
+// Example requestOptions
+
+{
+	hostname,
+	port,
+	ca: certificate,	// Optional. Only needed if server uses self-signed certificate
+	auth,							// Basic auth: "name:password"
+	headers: {
+		"x-api-version": "1.0",
+	},
+};

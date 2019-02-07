@@ -1,0 +1,6 @@
+// How to assert that an async function throws an exception
+
+await assert.exceptionAsync(
+	() => functionToCall(),
+	"Text of exception message"		// Optional
+);
