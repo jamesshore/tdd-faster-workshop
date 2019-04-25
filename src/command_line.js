@@ -7,7 +7,17 @@ module.exports = class CommandLine {
 		return new CommandLine();
 	}
 
+	static createNull(arg) {
+		return new CommandLine(arg);
+	}
+
+	constructor(nullArg) {
+		this._nullArg = nullArg;
+	}
+
 	arg() {
+		if (this._nullArg !== undefined) return this._nullArg;
+
 		return process.argv[2];
 	}
 

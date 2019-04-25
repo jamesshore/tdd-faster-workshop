@@ -18,4 +18,9 @@ describe("CommandLine", function() {
 		}
 	});
 
+	it("argument is nullable", function() {
+		const cli = CommandLine.createNull("null_arg");
+		assert.equal(cli.arg(), "null_arg");
+	});
+
 });
