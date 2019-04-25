@@ -14,6 +14,7 @@ module.exports = class CommandLine {
 	constructor(proc, cons) {
 		this._process = proc;
 		this._console = cons;
+		this._lastOutput = null;
 	}
 
 	arg() {
@@ -22,6 +23,11 @@ module.exports = class CommandLine {
 
 	output(data) {
 		this._console.log(data);
+		this._lastOutput = data;
+	}
+
+	getLastOutput() {
+		return this._lastOutput;
 	}
 
 };
