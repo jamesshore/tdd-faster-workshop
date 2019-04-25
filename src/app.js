@@ -2,11 +2,16 @@
 "use strict";
 
 const rot13 = require("./rot13.js");
+const CommandLine = require("./command_line.js");
 
 module.exports = class App {
 
-	run(input) {
-		return rot13.transform(input);
+	constructor(cli = CommandLine.create()) {
+		this._cli = cli;
+	}
+
+	run() {
+		return rot13.transform(this._cli.arg());
 	}
 
 };
