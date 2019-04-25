@@ -11,7 +11,9 @@ module.exports = class App {
 	}
 
 	run() {
-		return rot13.transform(this._cli.arg());
+		const input = this._cli.arg();
+		const output = rot13.transform(input);
+		this._cli.output(output);
 	}
 
 };

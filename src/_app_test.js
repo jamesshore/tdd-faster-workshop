@@ -11,8 +11,8 @@ describe("Application", function() {
 		const cli = CommandLine.createNull("hello");
 
 		const app = new App(cli);
-		const response = app.run();
-		assert.equal(response, "uryyb");
+		app.run();
+		assert.equal(cli.getLastOutput(), "uryyb");
 	});
 
 });
