@@ -4,15 +4,16 @@
 module.exports = class CommandLine {
 
 	static create() {
-		return new CommandLine(process);
+		return new CommandLine(process, console);
 	}
 
 	static createNull(arg) {
-		return new CommandLine(new NullProcess(arg));
+		return new CommandLine(new NullProcess(arg), new NullConsole());
 	}
 
-	constructor(proc) {
+	constructor(proc, cons) {
 		this._process = proc;
+		this._console = cons;
 	}
 
 	arg() {
@@ -20,7 +21,7 @@ module.exports = class CommandLine {
 	}
 
 	output(data) {
-		console.log(data);
+		this._console.log(data);
 	}
 
 };
@@ -28,4 +29,8 @@ module.exports = class CommandLine {
 class NullProcess {
 	constructor(arg) { this._arg = arg; }
 	get argv() { return [ undefined, undefined, this._arg ]; }
+}
+
+class NullConsole {
+	log() {}
 }

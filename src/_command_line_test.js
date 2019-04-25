@@ -32,4 +32,12 @@ describe("CommandLine", function() {
 		assert.equal(cli.arg(), "null_arg");
 	});
 
+	it("output is nullable", function() {
+		stdout.inspectSync((output) => {
+			const cli = CommandLine.createNull();
+			cli.output("ignore me");
+			assert.deepEqual(output, []);
+		});
+	});
+
 });
