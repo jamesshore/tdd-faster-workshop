@@ -3,6 +3,7 @@
 
 const assert = require("./assert.js");
 const CommandLine = require("./command_line.js");
+const stdout = require("test-console").stdout;
 
 describe("CommandLine", function() {
 
@@ -16,6 +17,14 @@ describe("CommandLine", function() {
 		finally {
 			process.argv = oldArgs;
 		}
+	});
+
+	it("outputs to console", function() {
+		stdout.inspectSync((output) => {
+			const cli = CommandLine.create();
+			cli.output("my output");
+			assert.deepEqual(output, [ "my output\n" ]);
+		});
 	});
 
 	it("argument is nullable", function() {
