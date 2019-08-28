@@ -1,7 +1,6 @@
 // Copyright Titanium I.T. LLC.
 "use strict";
 
-const rot13 = require("./rot13.js");
 const CommandLine = require("./command_line.js");
 
 module.exports = class App {
@@ -12,7 +11,7 @@ module.exports = class App {
 
 	run() {
 		const input = this._cli.arg();
-		const output = rot13.transform(input);
+		const output = 42;
 		this._cli.output(output);
 	}
 

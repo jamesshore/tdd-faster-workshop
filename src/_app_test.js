@@ -7,12 +7,12 @@ const CommandLine = require("./command_line.js");
 
 describe("Application", function() {
 
-	it("ROT-13s input", function() {
-		const cli = CommandLine.createNull("hello");
+	it("rolls dice", function() {
+		const cli = CommandLine.createNull("4d12");
 
 		const app = new App(cli);
 		app.run();
-		assert.equal(cli.getLastOutput(), "uryyb");
+		assert.equal(cli.getLastOutput(), 42);
 	});
 
 });
