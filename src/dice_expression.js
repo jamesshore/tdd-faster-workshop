@@ -27,11 +27,26 @@ module.exports = class DiceExpression {
 };
 
 function parseExpression(expression) {
-	let [ count, rest ] = expression.split("d");
-	let [ die, addend ] = rest.split("+");
+	if (!expression.includes("d")) fail();
 
+	let [ count, rest, ...tooManyDees ] = expression.split("d");
+	if (tooManyDees.length > 0) fail();
 	if (count === "") count = 1;
-	if (!rest.includes("+")) addend = 0;
+	if (count < 1) fail();
 
-	return [ +count, +die, +addend ];
+	let addendSplit = "+";
+	if (rest.includes("-")) addendSplit = "-";
+	let [ die, addend, ...tooManyAddends ] = rest.split(addendSplit);
+	if (tooManyAddends.length > 0) fail();
+	if (addend === undefined) addend = 0;
+	if (addendSplit === "-") addend *= -1;
+	if (die < 1) fail();
+
+	[ count, die, addend ] = [ +count, +die, +addend ];
+	if (Number.isNaN(count) || Number.isNaN(die) || Number.isNaN(addend)) fail();
+	return [ count, die, addend ];
+
+	function fail() {
+		throw new Error(`Invalid dice expression: ${expression}`);
+	}
 }
