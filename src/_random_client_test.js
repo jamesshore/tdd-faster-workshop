@@ -143,7 +143,7 @@ describe("RandomClient", function() {
 		});
 
 	});
-	
+
 
 	async function checkFailureAsync(response, expectedMessage) {
 		const client = createClient();

@@ -3,4 +3,4 @@
 
 const App = require("./app.js");
 
-new App().run();
+new App().runAsync();
