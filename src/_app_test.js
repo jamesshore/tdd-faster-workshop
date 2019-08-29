@@ -4,6 +4,7 @@
 const assert = require("./assert");
 const App = require("./app");
 const CommandLine = require("./command_line");
+const Randomizer = require("./randomizer");
 const RandomClient = require("./random_client");
 
 describe("Application", function() {
@@ -14,7 +15,20 @@ describe("Application", function() {
 		const app = createApp({ cli, randomClient });
 
 		await app.runAsync();
-		assert.equal(cli.getLastOutput(), 4);
+		assert.equal(cli.getLastOutput(), "4");
+	});
+
+	it("falls back to local randomizer when service fails", async function() {
+		const cli = CommandLine.createNull("4d12");
+		const randomClient = RandomClient.createNull({ error: "my_failure" });
+		const randomizer = Randomizer.createNull([ 0, 0, 0, 0 ]);
+		const app = createApp({ cli, randomClient, randomizer });
+
+		let expectedErrorMessage;
+		try { await randomClient.getNumbersAsync(4); } catch (err) { expectedErrorMessage = err.message; }
+
+		await app.runAsync();
+		assert.equal(cli.getLastOutput(), `4\nNote: service failed: ${expectedErrorMessage}`);
 	});
 
 	it("fails gracefully when bad dice expression provided", function() {
@@ -35,6 +49,10 @@ describe("Application", function() {
 
 });
 
-function createApp({ cli = CommandLine.createNull(), randomClient = RandomClient.createNull() } = {}) {
-	return new App(cli, randomClient);
+function createApp({
+	cli = CommandLine.createNull(),
+	randomClient = RandomClient.createNull(),
+	randomizer = Randomizer.createNull(),
+} = {}) {
+	return new App(cli, randomClient, randomizer);
 }
