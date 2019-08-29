@@ -6,10 +6,24 @@ const https = require("https");
 module.exports = class RandomClient {
 
 	static create(options) {
-		return new RandomClient(options);
+		return new RandomClient(https, options);
 	}
 
-	constructor({ hostname, port, certificate, auth }) {
+	static createNull({ error, numbers = [] } = {}) {
+		let response;
+		if (error === undefined) {
+			const body = JSON.stringify({ numbers });
+			response = { status: 200, body };
+		}
+		else {
+			response = { status: 500, body: error };
+		}
+
+		return new RandomClient(new NullHttps(response), { hostname: "Null RandomClient" });
+	}
+
+	constructor(https, { hostname, port, certificate, auth }) {
+		this._https = https;
 		this._requestOptions = {
 			hostname,
 			port,
@@ -26,7 +40,7 @@ module.exports = class RandomClient {
 			...this._requestOptions,
 			path: `/api/course/random_numbers?qty=${quantity}`,
 		};
-		const { status, body } = await performRequestAsync(requestOptions);
+		const { status, body } = await performRequestAsync(this._https, requestOptions);
 		if (status !== 200) fail(requestOptions, status, body, `Unexpected status`);
 
 		const response = parseBodyOrFailFast(body, requestOptions, status);
@@ -39,8 +53,7 @@ module.exports = class RandomClient {
 
 };
 
-
-async function performRequestAsync(requestOptions) {
+async function performRequestAsync(https, requestOptions) {
 	try {
 		return await new Promise((resolve, reject) => {
 			const request = https.get(requestOptions);
@@ -101,4 +114,40 @@ function fail(requestOptions, responseStatus, responseBody, message) {
 		`Status: ${responseStatus}\n` +
 		`Response body: ${responseBody}`
 	);
+}
+
+
+class NullHttps {
+	constructor(response) { this._response = response; }
+
+	get() {
+		return new NullRequest(this._response);
+	}
+}
+
+class NullRequest {
+	constructor(response) { this._response = response; }
+
+	on(event, handler) {
+		if (event === "response") this._responseHandler = handler;
+	}
+
+	end() {
+		this._responseHandler(new NullResponse(this._response));
+	}
+}
+
+class NullResponse {
+	constructor({ status, body }) {
+		this.statusCode = status;
+		this.headers = {};
+		this._body = body;
+	}
+
+	on(event, handler) {
+		if (event === "data") return setImmediate(() => handler(this._body));
+		if (event === "end") setImmediate(handler);
+	}
+
+	setEncoding() {}
 }
