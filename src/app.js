@@ -13,13 +13,19 @@ module.exports = class App {
 	}
 
 	run() {
-		const input = this._cli.arg();
-		const expression = DiceExpression.create(input);
+		try {
+			const input = this._cli.arg();
+			if (input === undefined) throw new Error("usage: run dice_expression\nexample: run 3d6");
+			const expression = DiceExpression.create(input);
 
-		const randomNumbers = this._randomizer.generate(expression.numDice());
-		const output = expression.value(randomNumbers);
+			const randomNumbers = this._randomizer.generate(expression.numDice());
+			const output = expression.value(randomNumbers);
 
-		this._cli.output(output);
+			this._cli.output(output);
+		}
+		catch (err) {
+			this._cli.output(err.message);
+		}
 	}
 
 };
