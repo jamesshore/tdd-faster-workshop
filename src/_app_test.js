@@ -12,7 +12,7 @@ describe("Application", function() {
 
 		const app = new App(cli);
 		app.run();
-		assert.equal(cli.getLastOutput(), 42);
+		assert.equal(cli.getLastOutput(), 4);
 	});
 
 });
