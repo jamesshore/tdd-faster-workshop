@@ -19,10 +19,7 @@ describe("RandomClient", function() {
 	});
 
 	it("performs network request", async function() {
-		const client = RandomClient.create({
-			hostname: testServer.hostname(),
-			port: testServer.port(),
-			certificate: testServer.certificate(),
+		const client = createClient({
 			auth: "username:password",
 		});
 
@@ -43,5 +40,26 @@ describe("RandomClient", function() {
 			}
 		}]);
 	});
+
+	it("parses valid response", async function() {
+		const client = createClient();
+		testServer.setResponse({
+			status: 200,
+			body: '{ "numbers": [ 0.42, 0.777 ] }',
+		});
+
+		const numbers = await client.getNumbersAsync(2);
+		assert.deepEqual(numbers, [ 0.42, 0.777 ]);
+	});
+
+
+	function createClient({
+		hostname = testServer.hostname(),
+		port = testServer.port(),
+		certificate = testServer.certificate(),
+		auth = "irrelevant_user:irrelevant_password",
+	} = {}) {
+		return RandomClient.create({ hostname, port, certificate, auth });
+	}
 
 });

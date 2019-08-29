@@ -27,6 +27,8 @@ module.exports = class RandomClient {
 			path: `/api/course/random_numbers?qty=${quantity}`,
 		};
 		const { status, headers, body } = await performRequestAsync(requestOptions);
+
+		return JSON.parse(body).numbers;
 	}
 
 };
