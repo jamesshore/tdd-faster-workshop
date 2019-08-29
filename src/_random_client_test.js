@@ -7,6 +7,8 @@ const RandomClient = require("./random_client");
 
 describe("RandomClient", function() {
 
+	const VALID_RESPONSE_BODY = '{ "numbers": [ 0.3, 0.6, 0.9 ] }';
+
 	let testServer;
 
 	before(async function() {
@@ -25,7 +27,7 @@ describe("RandomClient", function() {
 
 		testServer.setResponse({
 			status: 200,
-			body: '{ "numbers": [ 0.3, 0.6, 0.9 ] }',
+			body: VALID_RESPONSE_BODY,
 		});
 
 		await client.getNumbersAsync(3);
@@ -52,6 +54,73 @@ describe("RandomClient", function() {
 		assert.deepEqual(numbers, [ 0.42, 0.777 ]);
 	});
 
+	it("fails fast if network request fails", async function() {
+		const client = createClient({ certificate: null });
+
+		const response = { status: "n/a", body: "n/a" };
+		await assert.exceptionAsync(
+			() => client.getNumbersAsync(3),
+			expectedError("Network request failed: self signed certificate", 3, response)
+		);
+	});
+
+	it("fails fast if status isn't 'okay'", async function() {
+		await checkFailureAsync(
+			{ status: 500, body: VALID_RESPONSE_BODY },
+			"Unexpected status"
+		);
+	});
+
+	it("fails fast if response can't be parsed", async function() {
+		await checkFailureAsync(
+			{ status: 200, body: "{{{{ invalid_json }}}}" },
+			"Failed to parse response body: Unexpected token { in JSON at position 1"
+		);
+	});
+
+	it("fails fast if response doesn't contain numbers", async function() {
+		await checkFailureAsync(
+			{ status: 200, body: '{ "no_numbers": [ "foo" ] }' },
+			"No 'numbers' field in response"
+		);
+	});
+
+	it("fails fast if response isn't an array", async function() {
+		await checkFailureAsync(
+			{ status: 200, body: '{ "numbers": 0.33 }' },
+			"'numbers' field should be an array"
+		);
+	});
+
+	it("fails fast if response is out of bounds", async function() {
+		await checkFailureAsync(
+			{ status: 200, body: '{ "numbers": [ 1 ] }' },
+			"'numbers' field contains values outside expected range (0 to 1, not including 1)"
+		);
+		await checkFailureAsync(
+			{ status: 200, body: '{ "numbers": [ -0.1 ] }' },
+			"'numbers' field contains values outside expected range (0 to 1, not including 1)"
+		);
+	});
+
+
+	async function checkFailureAsync(response, expectedMessage) {
+		const client = createClient();
+		testServer.setResponse(response);
+
+		await assert.exceptionAsync(
+			() => client.getNumbersAsync(3),
+			expectedError(expectedMessage, 3, response)
+		);
+	}
+
+	function expectedError(message, quantity, response) {
+		return `${message}\n` +
+			`Service: Random (${testServer.hostname()}:${testServer.port()})\n` +
+			`Endpoint: /api/course/random_numbers?qty=${quantity}\n` +
+			`Status: ${response.status}\n` +
+			`Response body: ${response.body}`;
+	}
 
 	function createClient({
 		hostname = testServer.hostname(),

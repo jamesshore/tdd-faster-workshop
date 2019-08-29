@@ -26,21 +26,32 @@ module.exports = class RandomClient {
 			...this._requestOptions,
 			path: `/api/course/random_numbers?qty=${quantity}`,
 		};
-		const { status, headers, body } = await performRequestAsync(requestOptions);
+		const { status, body } = await performRequestAsync(requestOptions);
+		if (status !== 200) fail(requestOptions, status, body, `Unexpected status`);
 
-		return JSON.parse(body).numbers;
+		const response = parseBodyOrFailFast(body, requestOptions, status);
+		if (response.numbers === undefined) fail(requestOptions, status, body, "No 'numbers' field in response");
+		const numbers = response.numbers;
+
+		failIfBadNumbersResponse(numbers, requestOptions, status, body);
+		return numbers;
 	}
 
 };
 
 
-function performRequestAsync(requestOptions) {
-	return new Promise((resolve, reject) => {
-		const request = https.get(requestOptions);
-		request.on("response", handleResponseFn(resolve, reject));
-		request.on("error", reject);
-		request.end();
-	});
+async function performRequestAsync(requestOptions) {
+	try {
+		return await new Promise((resolve, reject) => {
+			const request = https.get(requestOptions);
+			request.on("response", handleResponseFn(resolve, reject));
+			request.on("error", reject);
+			request.end();
+		});
+	}
+	catch (err) {
+		fail(requestOptions, "n/a", "n/a", `Network request failed: ${err.message}`);
+	}
 }
 
 function handleResponseFn(resolve, reject) {
@@ -57,4 +68,37 @@ function handleResponseFn(resolve, reject) {
 		});
 		response.on("error", reject);
 	};
+}
+
+function parseBodyOrFailFast(body, requestOptions, status) {
+	try {
+		return JSON.parse(body);
+	}
+	catch (err) {
+		fail(requestOptions, status, body, `Failed to parse response body: ${err.message}`);
+	}
+}
+
+function failIfBadNumbersResponse(numbers, requestOptions, status, body) {
+	if (!Array.isArray(numbers)) fail(requestOptions, status, body, "'numbers' field should be an array");
+
+	const numbersInRange = numbers.every((number) => number >=0 && number < 1);
+	if (!numbersInRange) {
+		fail(
+			requestOptions,
+			status,
+			body,
+			"'numbers' field contains values outside expected range (0 to 1, not including 1)"
+		);
+	}
+}
+
+function fail(requestOptions, responseStatus, responseBody, message) {
+	throw new Error(
+		`${message}\n` +
+		`Service: Random (${requestOptions.hostname}:${requestOptions.port})\n` +
+		`Endpoint: ${requestOptions.path}\n` +
+		`Status: ${responseStatus}\n` +
+		`Response body: ${responseBody}`
+	);
 }
